@@ -1,0 +1,63 @@
+{
+  "video_id": "i2t27muCOG8",
+  "title": "Comment j'apprendrais à coder en 2025 si je devais tout recommencer !",
+  "url": "https://www.youtube.com/watch?v=i2t27muCOG8",
+  "comment_count": 6,
+  "comments": [
+    {
+      "author": "@Mlactio",
+      "author_id": "UCd-GgPC0u7abi2OnREgvWbQ",
+      "text": "Salut Anis,\nJe tenais à te dire à quel point j’apprécie le travail que tu fais. Ta capacité à vulgariser des problématiques techniques tout en les replaçant dans le contexte de notre société est vraiment exceptionnelle. Tu ne te contentes pas d’expliquer des concepts complexes, tu les situes aussi dans leur dimension économique et philosophique, ce qui rend tes vidéos non seulement instructives, mais aussi profondément enrichissantes.\nMême si je suis né en 1970 et que je ne suis absolument pas dans le milieu de l’informatique (je suis chauffeur routier SPL), j’envisage vraiment d’apprendre à coder, ne serait-ce que pour ma culture personnelle. Tout matériel comme celui que tu proposes à tes membres est pour moi le bienvenu et une motivation supplémentaire.\nMerci pour ton approche unique et pour la manière dont tu nous aides à comprendre les enjeux actuels avec clarté et profondeur. Continue comme ça !\nÀ bientôt, Michaël",
+      "likes": 1,
+      "timestamp": 1755907200,
+      "parent": "root",
+      "is_reply": false
+    },
+    {
+      "author": "@Super_Monor",
+      "author_id": "UCfNbxeSCrExxqdZiw_t4IGg",
+      "text": "Bonjour, je suis un nouveau membre, franchement la vidéo est Super, et oui , j'attends avec impatience la prochaine video membre",
+      "likes": 0,
+      "timestamp": 1763856000,
+      "parent": "root",
+      "is_reply": false
+    },
+    {
+      "author": "@Kento-rg7dw",
+      "author_id": "UCjJEVoKYlkWiC1-Ms4JdUvw",
+      "text": "Salut, je viens de devenir membre pour découvrir cette vidéo. Alors elle m'a pas été si utile que ça, parce que ça fait deux ans que je suis en étude de web (dont un an en alternance) et je code déjà depuis quelques années. Mais je la trouve quand même assez intéressante, très juste, seul bémol : trop courte.\n\nJ'aurais aimé que tu approfondisses encore un peu plus le sujet, sur comment choisir ce qu'on a envie de faire, des exemples de projets etc. Mais aussi des conseils pour des gars comme moi qui \"savent\" déjà coder, mais dont le but est d'approfondir de plus en plus pour se professionnaliser.\n\nEt du coup pour répondre à ta question, moi j'aimerais beaucoup voir une vidéo sur le DevOps. Parce qu'aujourd'hui je sais faire des sites, faire des outils web même, connectés avec des script python etc. Mais je n'ai que très peu de notions de sur  les infrastructures, la sécurité, ou tout ce qui touche de près ou de loin à de l'admin sys.\n\nMerci beaucoup en tout cas pour tout ton travail, ça aide énormément !",
+      "likes": 0,
+      "timestamp": 1758585600,
+      "parent": "root",
+      "is_reply": false
+    },
+    {
+      "author": "@pydathon",
+      "author_id": "UCpS8bvP1lJ6K8TQI18xZK7g",
+      "text": "Très intéressant ! En revanche, je ne suis pas convaincu par l’idée de commencer par le C. Le code peut déjà sembler intimidant au départ, et débuter avec un langage aussi bas niveau risque de décourager pas mal de monde.\n\nUn langage de haut niveau masque certes beaucoup de choses, mais c’est justement ce qui peut le rendre plus accessible pour un débutant. Rien n’empêche ensuite de revenir vers le C pour approfondir les concepts et combler les zones d’ombre 😊\n\nBien sûr, si t’es déter et que tu sais déjà que ça va te plaire y’a moins de risque mais dans la majorité des cas je pense que c’est une strat plus safe\n\nEn tout cas très bon thème de vidéo, de la valeur c’est tout ce qu’on demande !\n\nN’hésite pas à faire des vidéos techniques aussi !",
+      "likes": 0,
+      "timestamp": 1755907200,
+      "parent": "root",
+      "is_reply": false
+    },
+    {
+      "author": "@daye40k92",
+      "author_id": "UCOsVOrCQhBFGommCxdUNR9w",
+      "text": "Let’s go les guys",
+      "likes": 0,
+      "timestamp": 1755907200,
+      "parent": "root",
+      "is_reply": false
+    },
+    {
+      "author": "@dastan71",
+      "author_id": "UCBAf_m2WkAoilovD6N717_w",
+      "text": "Salut Anis,\n\nC'est sympa comme projet de vidéo, j'ai commencé à apprendre à coder sur du python, bas niveau pour l'instant (à coté de mon travail), et je vais revoir un peu si tu dis que c'est probablement plus utile de commencer par du C.\nJ'utilise une appli, Mimo, et j'ai l'abonnement gpt plus, donc ça devrait bien se passer pour débuter. J'ai vu qu'il y avait du c++ sur l'appli, rien à voir ou ça rentre dans le c ?",
+      "likes": 0,
+      "timestamp": 1755907200,
+      "parent": "root",
+      "is_reply": false
+    }
+  ],
+  "error": null
+}

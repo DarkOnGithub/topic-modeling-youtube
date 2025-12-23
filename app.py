@@ -9,9 +9,12 @@ from queue import Queue
 from flask import Flask, render_template, request, jsonify, send_file
 import yt_dlp
 
-# Number of parallel workers for comment extraction (default to CPU count)
-DEFAULT_WORKERS = os.cpu_count() or 4
-MAX_WORKERS = DEFAULT_WORKERS * 2  # Allow up to 2x CPU count
+# Number of parallel workers for comment extraction (default to 2 for rate limit safety)
+DEFAULT_WORKERS = 2
+MAX_WORKERS = (os.cpu_count() or 4) * 2  # Allow up to 2x CPU count
+
+# Cookies file for YouTube authentication (to avoid bot detection)
+COOKIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
 
 app = Flask(__name__)
 app.config['OUTPUT_DIR'] = 'data'
@@ -77,6 +80,9 @@ def get_channel_videos(channel_url):
         'extract_flat': True,
         'force_generic_extractor': False,
     }
+    # Add cookies if file exists
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
 
     # Construire l'URL de la chaîne si ce n'est pas déjà une URL complète
     original_input = channel_url
@@ -126,7 +132,12 @@ def get_video_comments(video_url):
         'getcomments': True,
         'extract_flat': False,
         'extractor_args': {'youtube': {'comment_sort': ['top'], 'skip': ['dash', 'hls']}},
+        'ignore_no_formats_error': True,
+        'check_formats': False,  # Don't check format availability
     }
+    # Add cookies if file exists
+    if os.path.exists(COOKIES_FILE):
+        ydl_opts['cookiefile'] = COOKIES_FILE
 
     comments = []
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

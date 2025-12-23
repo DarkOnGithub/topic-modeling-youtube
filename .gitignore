@@ -39,3 +39,8 @@ Thumbs.db
 # Logs
 *.log
 
+# Cookies (sensitive data)
+cookies.txt
+*cookies*.txt
+!requirements.txt
+
