@@ -2,9 +2,9 @@ import torch
 from typing import List, Dict, Any, Optional
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
+from transformers import BitsAndBytesConfig
 from umap import UMAP
 
-# Singleton for the embedding model to avoid reloading it in memory
 _embedding_model_instance: Optional[SentenceTransformer] = None
 
 def get_embedding_model() -> SentenceTransformer:
@@ -15,17 +15,29 @@ def get_embedding_model() -> SentenceTransformer:
     global _embedding_model_instance
     if _embedding_model_instance is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        model_kwargs = {
+            "dtype": torch.bfloat16 if device == "cuda" else torch.float32,
+        }
+        
+        if device == "cuda":
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+            )
+            model_kwargs["quantization_config"] = quantization_config
+            
         _embedding_model_instance = SentenceTransformer(
             "google/embeddinggemma-300m",
-            truncate_dim=256,  
-            device=device
+            truncate_dim=256,
+            device=device,
+            model_kwargs=model_kwargs
         )
     return _embedding_model_instance
 
 def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int = 10) -> List[Dict[str, Any]]:
     """
     Runs BERTopic using Gemma embeddings and UMAP for dimensionality reduction.
-    Reduce Gemma embeddings to 5 dimensions (UMAP + Truncating).
     """
     embedding_model = get_embedding_model()
     
@@ -46,6 +58,8 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
     topics, _ = model.fit_transform(processed_texts)
     
     all_topics = model.get_topics()
+    representative_docs = model.get_representative_docs()
+    
     formatted_topics = []
     
     for topic_id, topic_data in all_topics.items():
@@ -55,10 +69,13 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
         words = [item[0] for item in topic_data[:n_top_words]]
         weights = [float(item[1]) for item in topic_data[:n_top_words]]
         
+        docs = representative_docs.get(topic_id, [])
+        
         formatted_topics.append({
             "id": int(topic_id) + 1,
             "words": words,
-            "weights": weights
+            "weights": weights,
+            "representative_docs": docs
         })
         
     return formatted_topics

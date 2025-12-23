@@ -1535,7 +1535,7 @@
                     
                     card.innerHTML = `
                         <div class="card-header" style="margin-bottom: 10px;">
-                            <h3 class="card-title">Topic ${topic.id}</h3>
+                            <h3 class="card-title">${topic.name || 'Topic ' + topic.id}</h3>
                         </div>
                         <div id="${topicId}" style="width: 100%; height: 320px;"></div>
                     `;
