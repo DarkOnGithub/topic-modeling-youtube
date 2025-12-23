@@ -6,8 +6,11 @@ import uuid
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from queue import Queue
+from typing import List, Dict, Set, Optional, Any, Tuple
 from flask import Flask, render_template, request, jsonify, send_file
 import yt_dlp
+from src.modeling import run_topic_modeling
+from src.modeling_methods import ModelingMethod
 
 # Number of parallel workers for comment extraction (default to 2 for rate limit safety)
 DEFAULT_WORKERS = 2
@@ -19,7 +22,7 @@ COOKIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies
 app = Flask(__name__)
 app.config['OUTPUT_DIR'] = 'data'
 
-# Créer le dossier data s'il n'existe pas
+# Create data folder if it doesn't exist
 os.makedirs(app.config['OUTPUT_DIR'], exist_ok=True)
 
 # Global state for extraction tracking
@@ -41,7 +44,7 @@ queue_list = []  # For display purposes
 queue_lock = threading.Lock()
 
 
-def get_already_downloaded_video_ids(channel_folder=None):
+def get_already_downloaded_video_ids(channel_folder: Optional[str] = None) -> Set[str]:
     """Get all video IDs that have already been downloaded.
 
     If channel_folder is provided, only check that channel's videos folder.
@@ -72,8 +75,8 @@ def get_already_downloaded_video_ids(channel_folder=None):
     return downloaded_ids
 
 
-def get_channel_videos(channel_url):
-    """Récupère la liste de toutes les vidéos d'une chaîne avec métadonnées."""
+def get_channel_videos(channel_url: str) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Retrieves the list of all videos from a channel with metadata."""
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -123,7 +126,7 @@ def get_channel_videos(channel_url):
     return videos, channel_info
 
 
-def get_video_comments(video_url):
+def get_video_comments(video_url: str) -> List[Dict[str, Any]]:
     """Fetch all comments from a video."""
     ydl_opts = {
         'quiet': True,
@@ -198,12 +201,12 @@ def system_info():
 
 @app.route('/api/channel-info', methods=['POST'])
 def get_channel_info():
-    """Endpoint pour récupérer les infos de la chaîne."""
+    """Endpoint to get channel information."""
     data = request.json
     channel_input = data.get('channel', '')
 
     if not channel_input:
-        return jsonify({'error': 'Veuillez fournir un nom ou ID de chaîne'}), 400
+        return jsonify({'error': 'Please provide a channel name or ID'}), 400
 
     try:
         videos, channel_info = get_channel_videos(channel_input)
@@ -430,9 +433,9 @@ def do_extraction(channel_input, limit=None, skip_existing=False, workers=None):
         final_video_count = existing_count + successful_videos
 
         if rate_limit_hit:
-            print(f"\n⚠️  Extraction stopped due to rate limiting!")
+            print("\n⚠️  Extraction stopped due to rate limiting!")
             print(f"Successfully extracted {successful_videos} videos before hitting the limit.")
-            print(f"Re-run with 'Skip already downloaded' to continue later.")
+            print("Re-run with 'Skip already downloaded' to continue later.")
         elif was_stopped:
             print(f"Extraction stopped! {total_comments} comments saved to {folder_name}/")
         else:
@@ -569,16 +572,16 @@ def clear_queue():
 
 @app.route('/api/download/<filename>')
 def download_file(filename):
-    """Télécharger le fichier JSON généré."""
+    """Download the generated JSON file."""
     filepath = os.path.join(app.config['OUTPUT_DIR'], filename)
     if os.path.exists(filepath):
         return send_file(filepath, as_attachment=True)
-    return jsonify({'error': 'Fichier non trouvé'}), 404
+    return jsonify({'error': 'File not found'}), 404
 
 
 @app.route('/api/files')
 def list_files():
-    """Lister tous les fichiers JSON disponibles."""
+    """List all available JSON files."""
     files = []
     output_dir = app.config['OUTPUT_DIR']
 
@@ -587,7 +590,7 @@ def list_files():
             if filename.endswith('.json'):
                 filepath = os.path.join(output_dir, filename)
                 size = os.path.getsize(filepath)
-                # Formater la taille
+                # Format size
                 if size < 1024:
                     size_str = f"{size} B"
                 elif size < 1024 * 1024:
@@ -601,7 +604,7 @@ def list_files():
                     'path': filepath
                 })
 
-    # Trier par date de modification (plus récent en premier)
+    # Sort by modification date (most recent first)
     files.sort(key=lambda x: os.path.getmtime(x['path']), reverse=True)
 
     return jsonify({'files': files})
@@ -730,6 +733,30 @@ def get_file_detail(folder):
         }
 
         return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/modeling', methods=['POST'])
+def modeling():
+    """Endpoint for topic modeling analysis."""
+    data = request.json
+    channel_folder = data.get('folder')
+    method_str = data.get('method', 'lda').lower()
+    n_topics = int(data.get('n_topics', 5))
+    
+    if not channel_folder:
+        return jsonify({'error': 'No channel folder provided'}), 400
+        
+    try:
+        # Convert string method to ModelingMethod Enum
+        try:
+            method = ModelingMethod(method_str)
+        except ValueError:
+            return jsonify({'error': f'Invalid method: {method_str}'}), 400
+
+        results = run_topic_modeling(channel_folder, method=method, n_topics=n_topics)
+        return jsonify(results)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -873,10 +873,55 @@
             </div>
 
             <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Run Analysis</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label class="form-label">Select Channel</label>
+                        <select id="modelingChannelSelect">
+                            <option value="">Select a channel...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Method</label>
+                        <select id="modelingMethod">
+                            <option value="lda">LDA (Latent Dirichlet Allocation)</option>
+                            <option value="nmf">NMF (Non-negative Matrix Factorization)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Number of topics: <span id="topicsValue">5</span></label>
+                        <input type="range" id="topicsSlider" min="2" max="15" value="5"
+                               style="width: 100%; cursor: pointer;"
+                               oninput="document.getElementById('topicsValue').textContent = this.value">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="runModelingBtn" onclick="runModeling()">
+                    Run Analysis
+                </button>
+            </div>
+
+            <div id="modelingResults" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title" id="resultsSummary">Analysis Results</h2>
+                    </div>
+                    <div id="topicsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 20px;">
+                        <!-- Topic charts will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="modelingEmptyState">
                 <div class="empty-state">
-                    <div class="empty-icon">&#128736;</div>
-                    <div class="empty-title">Coming Soon</div>
-                    <div class="empty-text">The topic modeling pipeline will be available soon</div>
+                    <div class="empty-icon">🧬</div>
+                    <div class="empty-title">Ready for discovery</div>
+                    <div class="empty-text">Choose a dataset and method above to extract hidden topics from comments</div>
                 </div>
             </div>
         </div>
@@ -897,6 +942,8 @@
 
             if (tabName === 'data') {
                 loadDataFiles();
+            } else if (tabName === 'modeling') {
+                loadDataFiles().then(() => populateModelingDropdown());
             }
         }
 
@@ -1420,6 +1467,133 @@
         function truncateText(text, maxLength) {
             if (!text) return '';
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        function populateModelingDropdown() {
+            const select = document.getElementById('modelingChannelSelect');
+            const currentValue = select.value;
+            
+            if (!filesData || filesData.length === 0) {
+                select.innerHTML = '<option value="">No data available</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="">Select a channel...</option>' + 
+                filesData.map(f => `<option value="${f.folder}" ${f.folder === currentValue ? 'selected' : ''}>${f.channel_name || f.folder} (${f.comment_count} comments)</option>`).join('');
+        }
+
+        async function runModeling() {
+            const folder = document.getElementById('modelingChannelSelect').value;
+            const method = document.getElementById('modelingMethod').value;
+            const n_topics = document.getElementById('topicsSlider').value;
+
+            if (!folder) {
+                alert('Please select a channel first');
+                return;
+            }
+
+            const btn = document.getElementById('runModelingBtn');
+            const resultsDiv = document.getElementById('modelingResults');
+            const emptyState = document.getElementById('modelingEmptyState');
+            const container = document.getElementById('topicsContainer');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+            
+            try {
+                const response = await fetch('/api/modeling', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folder, method, n_topics })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                // Show results
+                emptyState.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                document.getElementById('resultsSummary').textContent = 
+                    `${data.method} Analysis for ${data.channel} (${data.total_comments} comments)`;
+
+                container.innerHTML = '';
+                
+                data.topics.forEach((topic, index) => {
+                    const topicId = `topic-chart-${index}`;
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.margin = '0';
+                    card.style.minWidth = '0'; 
+                    card.style.padding = '16px'; // Slightly smaller padding for charts
+                    card.style.display = 'flex';
+                    card.style.flexDirection = 'column';
+                    
+                    card.innerHTML = `
+                        <div class="card-header" style="margin-bottom: 10px;">
+                            <h3 class="card-title">Topic ${topic.id}</h3>
+                        </div>
+                        <div id="${topicId}" style="width: 100%; height: 320px;"></div>
+                    `;
+                    container.appendChild(card);
+                    
+                    // Use setTimeout to ensure the container is rendered before Plotly calculates width
+                    setTimeout(() => renderTopicChart(topicId, topic), 0);
+                });
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Run Analysis';
+            }
+        }
+
+        function renderTopicChart(elementId, topic) {
+            // Normalize weights to 0-1 range relative to the maximum weight in this topic
+            const maxWeight = Math.max(...topic.weights);
+            const normalizedWeights = topic.weights.map(w => w / (maxWeight || 1));
+
+            const data = [{
+                x: [...normalizedWeights].reverse(),
+                y: [...topic.words].reverse(),
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: '#3b82f6',
+                    width: 0.8 // Slightly thinner bars to prevent vertical overflow
+                },
+                hovertemplate: '<b>%{y}</b><br>Importance: %{x:.2f}<extra></extra>'
+            }];
+
+            const layout = {
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { color: '#888', size: 11 },
+                margin: { l: 10, r: 20, t: 10, b: 40 }, // Added right margin
+                xaxis: { 
+                    gridcolor: '#2a2a2a',
+                    zeroline: false,
+                    range: [0, 1.1],
+                    tickformat: '.1f',
+                    fixedrange: true
+                },
+                yaxis: { 
+                    automargin: true,
+                    fixedrange: true
+                },
+                autosize: true
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: false
+            };
+
+            Plotly.newPlot(elementId, data, layout, config);
         }
 
         // Enter key support
