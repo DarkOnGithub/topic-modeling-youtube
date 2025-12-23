@@ -4,12 +4,24 @@ from transformers import pipeline, BitsAndBytesConfig
 
 PROMPT = """<start_of_turn>user
 I have a topic represented by these keywords: {keywords_str}{docs_str}
+
 Based on the keywords and the sample documents, what is a very short but highly descriptive title (max 3 words) for this topic?
+The title MUST be in {language}.
 Only provide the title, nothing else.<end_of_turn>
 <start_of_turn>model
 """
 
 _naming_model_instance: Optional[Any] = None
+
+LANG_NAMES = {
+    "en": "English",
+    "fr": "French",
+    "es": "Spanish",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "nl": "Dutch",
+}
 
 def get_naming_model():
     """Returns the singleton instance of Gemma 3 1b for topic naming. Quantized on 4 bits."""
@@ -39,21 +51,22 @@ def get_naming_model():
         )
     return _naming_model_instance
 
-def generate_topic_name(keywords: List[str], documents: Optional[List[str]] = None) -> str:
+def generate_topic_name(keywords: List[str], documents: Optional[List[str]] = None, lang_code: str = "en") -> str:
     """
     Generates a concise, descriptive name (max 3 words) based on keywords and sample documents.
-    Documents are optional and are used to generate a more descriptive name. 
+    The name is generated in the detected language.
     """
     generator = get_naming_model()
     
     keywords_str = ", ".join(keywords)
+    language = LANG_NAMES.get(lang_code, "English")
     
     docs_str = ""
     if documents:
         sample_docs = [doc[:300] + "..." if len(doc) > 300 else doc for doc in documents[:5]]
         docs_str = "\nSample documents from this topic:\n- " + "\n- ".join(sample_docs)
 
-    prompt = PROMPT.format(keywords_str=keywords_str, docs_str=docs_str)
+    prompt = PROMPT.format(keywords_str=keywords_str, docs_str=docs_str, language=language)
     
     try:
         results = generator(

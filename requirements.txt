@@ -15,6 +15,7 @@ accelerate>=0.27.0
 # NLP & Pre-traitement
 spacy>=3.7.0
 nltk>=3.8.0
+langid>=1.1.6
 
 # Reduction dimensionnelle
 umap-learn>=0.5.0

@@ -25,7 +25,7 @@ def run_topic_modeling(
     if not raw_texts:
         return {"error": "No comments found."}
 
-    processed_texts = preprocess_corpus(raw_texts, method)
+    processed_texts, lang_code = preprocess_corpus(raw_texts, method)
     if not processed_texts:
         return {"error": "No valid text after preprocessing."}
     
@@ -39,7 +39,7 @@ def run_topic_modeling(
     elif method == ModelingMethod.NMF:
         topics = run_nmf(processed_texts, n_topics, n_top_words)
     elif method == ModelingMethod.BERTOPIC:
-        topics = run_bertopic(processed_texts, n_topics, n_top_words)
+        topics = run_bertopic(processed_texts, n_topics, n_top_words, lang_code=lang_code)
     else:
         return {"error": f"Method '{method}' not recognized."}
     
@@ -48,7 +48,8 @@ def run_topic_modeling(
         if "words" in topic and topic["words"]:
             topic["name"] = generate_topic_name(
                 topic["words"], 
-                documents=documents
+                documents=documents,
+                lang_code=lang_code
             )
 
     return {

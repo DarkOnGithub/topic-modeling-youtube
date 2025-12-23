@@ -6,8 +6,29 @@ from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
 from transformers import BitsAndBytesConfig
 from umap import UMAP
-from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+import nltk
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import CountVectorizer
 from src.preprocessing import BASE_STOP_WORDS_YOUTUBE
+
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+
+def get_stopwords(lang_code: str = "en") -> list:
+    """Returns a list of stopwords for the given language code."""
+    lang_map = {
+        "en": "english",
+        "fr": "french",
+        "es": "spanish"
+    }
+    nltk_lang = lang_map.get(lang_code, "english")
+    try:
+        stop_words = set(stopwords.words(nltk_lang))
+    except Exception:
+        stop_words = set(stopwords.words("english"))
+    return list(stop_words.union(BASE_STOP_WORDS_YOUTUBE))
 
 _embedding_model_instance: Optional[SentenceTransformer] = None
 
@@ -49,14 +70,14 @@ def get_embedding_model() -> SentenceTransformer:
         _embedding_model_instance = model
     return _embedding_model_instance
 
-def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int = 10) -> List[Dict[str, Any]]:
+def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int = 10, lang_code: str = "en") -> List[Dict[str, Any]]:
     """
-    Runs BERTopic with optimizations for large datasets.
+    Runs BERTopic with optimizations for large datasets and automatic localization.
     """
 
     embedding_model = get_embedding_model()
     
-    all_stop_words = list(ENGLISH_STOP_WORDS.union(BASE_STOP_WORDS_YOUTUBE))
+    all_stop_words = get_stopwords(lang_code)
     vectorizer_model = CountVectorizer(stop_words=all_stop_words)
     
     umap_model = UMAP(
@@ -79,7 +100,6 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
         verbose=True
     )
     
-    print(f"Calculating embeddings for {len(processed_texts)} comments (Batch Size: 256)...")
 
     embeddings = embedding_model.encode(
         processed_texts, 
@@ -87,15 +107,12 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
         batch_size=256 
     )
     
-    print("Fitting BERTopic (Reduction + Clustering)...")
     topics, _ = model.fit_transform(processed_texts, embeddings=embeddings)
     
-    # Free VRAM immediately after fitting
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     gc.collect()
 
-    print("BERTopic fitted")
     all_topics = model.get_topics()
     representative_docs = model.get_representative_docs()
     
