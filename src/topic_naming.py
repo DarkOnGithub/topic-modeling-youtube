@@ -39,9 +39,10 @@ def get_naming_model():
         )
     return _naming_model_instance
 
-def generate_topic_name(keywords: List[str], documents: List[str] = None) -> str:
+def generate_topic_name(keywords: List[str], documents: Optional[List[str]] = None) -> str:
     """
     Generates a concise, descriptive name (max 3 words) based on keywords and sample documents.
+    Documents are optional and are used to generate a more descriptive name. 
     """
     generator = get_naming_model()
     

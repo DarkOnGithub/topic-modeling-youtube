@@ -33,12 +33,12 @@ def run_topic_modeling(
         topics = run_bertopic(processed_texts, n_topics, n_top_words)
     else:
         return {"error": f"Method '{method}' not recognized."}
-
     for topic in topics:
+        documents = topic.get("representative_docs")[:5]
         if "words" in topic and topic["words"]:
             topic["name"] = generate_topic_name(
                 topic["words"], 
-                documents=topic.get("representative_docs")
+                documents=documents
             )
 
     return {

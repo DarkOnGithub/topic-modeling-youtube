@@ -4,6 +4,8 @@ from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
 from transformers import BitsAndBytesConfig
 from umap import UMAP
+from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+from src.preprocessing import BASE_STOP_WORDS_YOUTUBE
 
 _embedding_model_instance: Optional[SentenceTransformer] = None
 
@@ -41,6 +43,10 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
     """
     embedding_model = get_embedding_model()
     
+    # Define custom stopwords and combine with built-in English ones
+    all_stop_words = list(ENGLISH_STOP_WORDS.union(BASE_STOP_WORDS_YOUTUBE))
+    vectorizer_model = CountVectorizer(stop_words=all_stop_words)
+    
     umap_model = UMAP(
         n_neighbors=15, 
         n_components=5, 
@@ -52,7 +58,8 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
     model = BERTopic(
         embedding_model=embedding_model, 
         umap_model=umap_model,
-        nr_topics=n_topics
+        nr_topics=n_topics,
+        vectorizer_model=vectorizer_model
     )
     
     topics, _ = model.fit_transform(processed_texts)
