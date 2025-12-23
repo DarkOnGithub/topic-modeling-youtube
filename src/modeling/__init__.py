@@ -3,6 +3,7 @@ from src.preprocessing import preprocess_corpus
 from src.utils import load_comments_from_folder
 from .lda import run_lda
 from .nmf import run_nmf
+from .BERTopic import run_bertopic
 from src.modeling_methods import ModelingMethod
 
 def run_topic_modeling(
@@ -26,6 +27,8 @@ def run_topic_modeling(
         topics = run_lda(processed_texts, n_topics, n_top_words)
     elif method == ModelingMethod.NMF:
         topics = run_nmf(processed_texts, n_topics, n_top_words)
+    elif method == ModelingMethod.BERTOPIC:
+        topics = run_bertopic(processed_texts, n_topics, n_top_words)
     else:
         return {"error": f"Method '{method}' not recognized."}
 

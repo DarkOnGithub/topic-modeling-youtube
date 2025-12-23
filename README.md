@@ -41,10 +41,10 @@ Pipeline for topic modeling:
 2. **Preprocessing** - Text cleaning (lowercase, stopwords, lemmatization)
 3. **Vectorization** - Transform to numerical vectors
 4. **Topic Modeling** - Available algorithms:
-   - LDA (Latent Dirichlet Allocation)
-   - NMF (Non-negative Matrix Factorization)
-   - BERTopic
-   - Top2Vec
+    - LDA (Latent Dirichlet Allocation)
+    - NMF (Non-negative Matrix Factorization)
+    - BERTopic (with Gemma embeddings)
+    - Top2Vec
 5. **Dimensionality Reduction** - UMAP, t-SNE, PCA
 
 ## Installation
@@ -175,10 +175,10 @@ youtube-comments-scraper/
 - [x] Channel metadata (subscribers, description)
 - [x] Web interface with tabs
 - [x] Data insights dashboard
-- [ ] NLP preprocessing pipeline
-- [ ] LDA/NMF implementation
-- [ ] BERTopic integration
-- [ ] Interactive visualization
+- [x] NLP preprocessing pipeline
+- [x] LDA/NMF implementation
+- [x] BERTopic integration (with Gemma embeddings)
+- [x] Interactive visualization
 - [ ] Results export
 
 ## License

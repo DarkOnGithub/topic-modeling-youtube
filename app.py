@@ -8,9 +8,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from queue import Queue
 from typing import List, Dict, Set, Optional, Any, Tuple
 from flask import Flask, render_template, request, jsonify, send_file
+from dotenv import load_dotenv
 import yt_dlp
 from src.modeling import run_topic_modeling
 from src.modeling_methods import ModelingMethod
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Number of parallel workers for comment extraction (default to 2 for rate limit safety)
 DEFAULT_WORKERS = 2

@@ -82,7 +82,8 @@ def preprocess_text(text: str, method: ModelingMethod) -> str:
     """
     if method == ModelingMethod.LDA or method == ModelingMethod.NMF:
         return _preprocessing(text)
-    return text
+    elif method == ModelingMethod.BERTOPIC:
+        return _clean_text(text)
 
 def preprocess_corpus(corpus: List[str], method: ModelingMethod) -> List[str]:
     """
