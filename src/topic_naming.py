@@ -12,11 +12,11 @@ Only provide the title, nothing else.<end_of_turn>
 _naming_model_instance: Optional[Any] = None
 
 def get_naming_model():
-    """Returns the singleton instance of Gemma 3 4b for topic naming. Quantized on 4 bits."""
+    """Returns the singleton instance of Gemma 3 1b for topic naming. Quantized on 4 bits."""
     global _naming_model_instance
     if _naming_model_instance is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Loading Gemma 3 4b on {device}...")
+        print(f"Loading Gemma 3 1b on {device}...")
         
         model_kwargs = {
             "dtype": torch.bfloat16 if device == "cuda" else torch.float32,
@@ -33,7 +33,7 @@ def get_naming_model():
         
         _naming_model_instance = pipeline(
             "text-generation", 
-            model="google/gemma-3-4b-it", 
+            model="google/gemma-3-1b-it", 
             device_map="auto" if device == "cuda" else None,
             model_kwargs=model_kwargs
         )

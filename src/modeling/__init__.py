@@ -6,6 +6,10 @@ from .nmf import run_nmf
 from .BERTopic import run_bertopic
 from src.modeling_methods import ModelingMethod
 from src.topic_naming import generate_topic_name
+import numpy as np
+
+
+MAX_COMMENTS = 40000
 
 def run_topic_modeling(
     channel_folder: str, 
@@ -24,7 +28,12 @@ def run_topic_modeling(
     processed_texts = preprocess_corpus(raw_texts, method)
     if not processed_texts:
         return {"error": "No valid text after preprocessing."}
-
+    
+    if len(processed_texts) > MAX_COMMENTS:
+        indices = np.random.choice(len(processed_texts), MAX_COMMENTS, replace=False)
+        processed_texts = [processed_texts[i] for i in indices]
+        print(f"Sampled {len(processed_texts)} comments from {len(raw_texts)} total comments.")
+        
     if method == ModelingMethod.LDA:
         topics = run_lda(processed_texts, n_topics, n_top_words)
     elif method == ModelingMethod.NMF:
@@ -33,6 +42,7 @@ def run_topic_modeling(
         topics = run_bertopic(processed_texts, n_topics, n_top_words)
     else:
         return {"error": f"Method '{method}' not recognized."}
+    
     for topic in topics:
         documents = topic.get("representative_docs")[:5]
         if "words" in topic and topic["words"]:

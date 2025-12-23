@@ -1,4 +1,6 @@
 import torch
+import gc
+import numpy as np
 from typing import List, Dict, Any, Optional
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
@@ -29,21 +31,31 @@ def get_embedding_model() -> SentenceTransformer:
             )
             model_kwargs["quantization_config"] = quantization_config
             
-        _embedding_model_instance = SentenceTransformer(
+        model = SentenceTransformer(
             "google/embeddinggemma-300m",
             truncate_dim=256,
             device=device,
             model_kwargs=model_kwargs
         )
+        model.max_seq_length = 512
+        
+        if device == "cuda" and hasattr(torch, "compile"):
+            try:
+                print("Compiling model for faster inference...")
+                model = torch.compile(model)
+            except Exception:
+                pass
+                
+        _embedding_model_instance = model
     return _embedding_model_instance
 
 def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int = 10) -> List[Dict[str, Any]]:
     """
-    Runs BERTopic using Gemma embeddings and UMAP for dimensionality reduction.
+    Runs BERTopic with optimizations for large datasets.
     """
+
     embedding_model = get_embedding_model()
     
-    # Define custom stopwords and combine with built-in English ones
     all_stop_words = list(ENGLISH_STOP_WORDS.union(BASE_STOP_WORDS_YOUTUBE))
     vectorizer_model = CountVectorizer(stop_words=all_stop_words)
     
@@ -52,23 +64,42 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
         n_components=5, 
         min_dist=0.0, 
         metric='cosine', 
-        random_state=42
+        random_state=42,
+        low_memory=True
     )
+    
+    min_topic_size = 50 if len(processed_texts) > 500 else 10
     
     model = BERTopic(
         embedding_model=embedding_model, 
         umap_model=umap_model,
         nr_topics=n_topics,
-        vectorizer_model=vectorizer_model
+        vectorizer_model=vectorizer_model,
+        min_topic_size=min_topic_size,
+        verbose=True
     )
     
-    topics, _ = model.fit_transform(processed_texts)
+    print(f"Calculating embeddings for {len(processed_texts)} comments (Batch Size: 256)...")
+
+    embeddings = embedding_model.encode(
+        processed_texts, 
+        show_progress_bar=True, 
+        batch_size=256 
+    )
     
+    print("Fitting BERTopic (Reduction + Clustering)...")
+    topics, _ = model.fit_transform(processed_texts, embeddings=embeddings)
+    
+    # Free VRAM immediately after fitting
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
+    print("BERTopic fitted")
     all_topics = model.get_topics()
     representative_docs = model.get_representative_docs()
     
     formatted_topics = []
-    
     for topic_id, topic_data in all_topics.items():
         if topic_id == -1: 
             continue
