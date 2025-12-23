@@ -59,14 +59,6 @@ def get_embedding_model() -> SentenceTransformer:
             model_kwargs=model_kwargs
         )
         model.max_seq_length = 512
-        
-        if device == "cuda" and hasattr(torch, "compile"):
-            try:
-                print("Compiling model for faster inference...")
-                model = torch.compile(model)
-            except Exception:
-                pass
-                
         _embedding_model_instance = model
     return _embedding_model_instance
 
@@ -99,12 +91,11 @@ def run_bertopic(processed_texts: List[str], n_topics: int = 5, n_top_words: int
         min_topic_size=min_topic_size,
         verbose=True
     )
-    
 
     embeddings = embedding_model.encode(
         processed_texts, 
         show_progress_bar=True, 
-        batch_size=256 
+        batch_size=128 
     )
     
     topics, _ = model.fit_transform(processed_texts, embeddings=embeddings)
